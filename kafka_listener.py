@@ -36,12 +36,9 @@ def find_offset_by_timestamp(consumer, topic_partition, timestamp):
 
 
 def schedule_check_nexus_file(file_name, delay=10):
-    time.sleep(delay)
-    check_nexus_file(file_name)
-
-def schedule_check_nexus_file(file_name, delay=10):
     timer = Timer(delay, check_nexus_file, args=(file_name,))
     timer.start()
+
 
 def process_message(message):
     if message.value()[4:8] == b'wrdn':
