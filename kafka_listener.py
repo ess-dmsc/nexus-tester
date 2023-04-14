@@ -1,33 +1,32 @@
-from kafka import KafkaConsumer, TopicPartition
-from test_nexus import check_nexus_file
 import time
-from threading import Timer
-
+from concurrent.futures import ThreadPoolExecutor
+from confluent_kafka import Consumer, TopicPartition
 from streaming_data_types import deserialise_wrdn
+from test_nexus import check_nexus_file
+
+BROKER = '10.100.1.19:9092'
+TOPIC = 'ymir_filewriter'
+START_TIMESTAMP_SEC = 24 * 60 * 60
+POOL_SIZE = 4
 
 
 def find_offset_by_timestamp(consumer, topic_partition, timestamp):
-    low = consumer.beginning_offsets([topic_partition])[topic_partition]
-    high = consumer.end_offsets([topic_partition])[topic_partition]
+    low = consumer.get_watermark_offsets(topic_partition, timeout=1)[0]
+    high = consumer.get_watermark_offsets(topic_partition, timeout=1)[1]
 
     while low < high:
         mid = (low + high) // 2
         consumer.seek(topic_partition, mid)
 
-        try:
-            records = [record for records_list in consumer.poll(5).values() for record in records_list]
-            if not records:
-                low = mid + 1
-                continue
-            msg = records[0]
-        except StopIteration:
-            # No records returned, continue to the next iteration
+        msg = consumer.poll(timeout=5)
+
+        if msg is None:
             low = mid + 1
             continue
 
-        if msg.timestamp < timestamp:
+        if msg.timestamp()[1] < timestamp:
             low = mid + 1
-        elif msg.timestamp > timestamp:
+        elif msg.timestamp()[1] > timestamp:
             high = mid
         else:
             return mid
@@ -36,49 +35,53 @@ def find_offset_by_timestamp(consumer, topic_partition, timestamp):
 
 
 def schedule_check_nexus_file(file_name, delay=10):
-    timer = Timer(delay, check_nexus_file, args=(file_name,))
-    timer.start()
+    time.sleep(delay)
+    check_nexus_file(file_name)
 
 
 def process_message(message):
-    if message.value[4:8] == b'wrdn':
-        result = deserialise_wrdn(message.value)
+    if message.value()[4:8] == b'wrdn':
+        result = deserialise_wrdn(message.value())
         try:
-            schedule_check_nexus_file(result.file_name)
+            with ThreadPoolExecutor(max_workers=POOL_SIZE) as executor:
+                executor.submit(schedule_check_nexus_file, result.file_name)
         except Exception as e:
-            print(f'failed to open{result.file_name}')
+            print(f'failed to open {result.file_name}')
             print(e)
 
 
-
 def main(broker, topic):
-    # Create a Kafka consumer
-    consumer = KafkaConsumer(
-        bootstrap_servers=broker,
-        auto_offset_reset='latest',
-    )
+    conf = {
+        'bootstrap.servers': broker,
+        'group.id': 'nexus-file-checker',
+        'auto.offset.reset': 'latest',
+    }
 
-    # Get the partitions for the topic
-    partitions = consumer.partitions_for_topic(topic)
-    if not partitions:
-        print(f"No partitions found for topic '{topic}'.")
-        return
+    consumer = Consumer(conf)
 
-    # Assign the partitions to the consumer and set the starting offset for each partition based on the timestamp
-    topic_partitions = [TopicPartition(topic, p) for p in partitions]
+    topic_partitions = [
+        TopicPartition(topic, p)
+        for p in consumer.list_topics(topic).topics[topic].partitions.keys()
+    ]
+
     consumer.assign(topic_partitions)
 
-    start_timestamp_ms = int((time.time() - 1*24*60*60) * 1000)
+    start_timestamp_ms = int((time.time() - START_TIMESTAMP_SEC) * 1000)
     for tp in topic_partitions:
         offset = find_offset_by_timestamp(consumer, tp, start_timestamp_ms)
         consumer.seek(tp, offset)
 
+    while True:
+        msg = consumer.poll(1.0)
+        if msg is None:
+            continue
+        if msg.error():
+            print("Consumer error: {}".format(msg.error()))
+        else:
+            process_message(msg)
 
-    # Process messages from the Kafka topic
-    for message in consumer:
-        process_message(message)
+    consumer.close()
+
 
 if __name__ == "__main__":
-    BROKER = '10.100.1.19:9092'
-    TOPIC = 'ymir_filewriter'
     main(BROKER, TOPIC)
