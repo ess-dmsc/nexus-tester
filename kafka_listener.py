@@ -1,6 +1,7 @@
 from kafka import KafkaConsumer, TopicPartition
 from test_nexus import check_nexus_file
 import time
+from threading import Timer
 
 from streaming_data_types import deserialise_wrdn
 
@@ -33,11 +34,17 @@ def find_offset_by_timestamp(consumer, topic_partition, timestamp):
 
     return low
 
+
+def schedule_check_nexus_file(file_name, delay=10):
+    timer = Timer(delay, check_nexus_file, args=(file_name,))
+    timer.start()
+
+
 def process_message(message):
     if message.value[4:8] == b'wrdn':
         result = deserialise_wrdn(message.value)
         try:
-            check_nexus_file(result.file_name)
+            schedule_check_nexus_file(result.file_name)
         except Exception as e:
             print(f'failed to open{result.file_name}')
             print(e)

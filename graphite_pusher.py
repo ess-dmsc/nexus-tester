@@ -1,6 +1,29 @@
 import socket
 import time
+from functools import wraps
 
+
+def rate_limited(min_interval):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if not hasattr(wrapper, '_last_called'):
+                wrapper._last_called = 0
+
+            elapsed_time = time.time() - wrapper._last_called
+            if elapsed_time < min_interval:
+                time.sleep(min_interval - elapsed_time)
+
+            result = func(*args, **kwargs)
+            wrapper._last_called = time.time()
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+@rate_limited(1)
 def send_metric_to_graphite(host, port, metric, value, timestamp=None):
     """
     Send a metric to a Graphite server.
@@ -17,10 +40,9 @@ def send_metric_to_graphite(host, port, metric, value, timestamp=None):
         timestamp = int(time.time())
 
     message = f"{metric} {value} {timestamp}\n"
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((host, port))
-    sock.sendall(message.encode())
-    sock.close()
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.connect((host, port))
+        sock.sendall(message.encode())
 
 if __name__ == "__main__":
     GRAPHITE_HOST = "10.100.211.201"

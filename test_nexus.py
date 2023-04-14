@@ -1,5 +1,3 @@
-import time
-
 import h5py
 from graphite_pusher import send_metric_to_graphite
 
@@ -64,7 +62,6 @@ def check_nexus_file(file_path):
 
     if errors:
         send_metric_to_graphite(GRAPHITE_HOST, GRAPHITE_PORT, METRIC_NAME, len(errors))
-        time.sleep(1)
         print(f"The following {len(errors)} errors were found:")
         for error in errors:
             print(f" - {error}")
