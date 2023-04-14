@@ -1,10 +1,12 @@
 import h5py
-from graphite_pusher import send_metric_to_graphite
+from graphite_pusher import GraphiteQueue
 
 GRAPHITE_HOST = "10.100.211.201"
 GRAPHITE_PORT = 2003
 FAILED_METRIC_NAME = "nexus_tester.failed_tests"
 PASSED_METRIC_NAME = "nexus_tester.passed_tests"
+
+graphite_queue = GraphiteQueue(GRAPHITE_HOST, GRAPHITE_PORT)
 
 def check_nexus_groups(file, errors):
     mandatory_groups = ['entry']
@@ -77,16 +79,14 @@ def check_nexus_file(file_path):
             check_entry_group(entry_group, errors, passed)
 
     if errors:
-        print("sending errors")
-        send_metric_to_graphite(GRAPHITE_HOST, GRAPHITE_PORT, FAILED_METRIC_NAME, len(errors))
-        print("sending passed")
-        send_metric_to_graphite(GRAPHITE_HOST, GRAPHITE_PORT, PASSED_METRIC_NAME, len(passed))
+        graphite_queue.add_metric(FAILED_METRIC_NAME, len(errors))
+        graphite_queue.add_metric(PASSED_METRIC_NAME, len(passed))
         print(f"The following {len(errors)} errors were found:")
         # for error in errors:
         #     print(f" - {error}")
     else:
-        send_metric_to_graphite(GRAPHITE_HOST, GRAPHITE_PORT, FAILED_METRIC_NAME, 0)
-        send_metric_to_graphite(GRAPHITE_HOST, GRAPHITE_PORT, PASSED_METRIC_NAME, len(passed))
+        graphite_queue.add_metric(FAILED_METRIC_NAME, 0)
+        graphite_queue.add_metric(PASSED_METRIC_NAME, len(passed))
         print("File adheres to NeXus standards.")
 
 if __name__ == '__main__':

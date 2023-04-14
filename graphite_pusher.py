@@ -1,27 +1,28 @@
 import socket
 import time
-from functools import wraps
+import threading
+import queue
+
+class GraphiteQueue:
+    def __init__(self, host, port, interval=1):
+        self.host = host
+        self.port = port
+        self.interval = interval
+        self.metrics_queue = queue.Queue()
+        self.thread = threading.Thread(target=self.process_queue)
+        self.thread.daemon = True
+        self.thread.start()
+
+    def process_queue(self):
+        while True:
+            metric, value, timestamp = self.metrics_queue.get()
+            send_metric_to_graphite(self.host, self.port, metric, value, timestamp)
+            time.sleep(self.interval)
+
+    def add_metric(self, metric, value, timestamp=None):
+        self.metrics_queue.put((metric, value, timestamp))
 
 
-def rate_limited(interval):
-    def decorator(fn):
-        last_called = [0]
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            elapsed_time = time.time() - last_called[0]
-            time_to_wait = interval - elapsed_time
-            if time_to_wait > 0:
-                time.sleep(time_to_wait)
-            ret = fn(*args, **kwargs)
-            last_called[0] = time.time()
-            return ret
-
-        return wrapper
-
-    return decorator
-
-
-@rate_limited(5)
 def send_metric_to_graphite(host, port, metric, value, timestamp=None):
     """
     Send a metric to a Graphite server.
