@@ -1,4 +1,4 @@
-# NeXus File Tester
+# NeXus Tester
 
 This project is designed to test NeXus files for compliance with specific standards, generate metrics for passed and failed tests, and push these metrics to Graphite. The project is composed of three main components:
 
@@ -26,13 +26,13 @@ This project is designed to test NeXus files for compliance with specific standa
 
 1. Clone the repository:
 ```
-git clone https://github.com/yourusername/nexus-file-tester.git
+git clone https://github.com/yourusername/nexus-tester.git
 ```
 
 
 2. Change to the project directory:
 ```
-cd nexus-file-tester
+cd nexus-tester
 ```
 
 
