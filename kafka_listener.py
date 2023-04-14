@@ -68,7 +68,7 @@ def main(broker, topic):
     topic_partitions = [TopicPartition(topic, p) for p in partitions]
     consumer.assign(topic_partitions)
 
-    start_timestamp_ms = int((time.time() - 30*24*60*60) * 1000)
+    start_timestamp_ms = int((time.time() - 1*24*60*60) * 1000)
     for tp in topic_partitions:
         offset = find_offset_by_timestamp(consumer, tp, start_timestamp_ms)
         consumer.seek(tp, offset)
