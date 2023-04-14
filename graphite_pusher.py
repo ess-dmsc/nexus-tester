@@ -3,20 +3,18 @@ import time
 from functools import wraps
 
 
-def rate_limited(min_interval):
-    def decorator(func):
-        @wraps(func)
+def rate_limited(interval):
+    def decorator(fn):
+        last_called = [0]
+        @wraps(fn)
         def wrapper(*args, **kwargs):
-            if not hasattr(wrapper, '_last_called'):
-                wrapper._last_called = 0
-
-            elapsed_time = time.time() - wrapper._last_called
-            if elapsed_time < min_interval:
-                time.sleep(min_interval - elapsed_time)
-
-            result = func(*args, **kwargs)
-            wrapper._last_called = time.time()
-            return result
+            elapsed_time = time.time() - last_called[0]
+            time_to_wait = interval - elapsed_time
+            if time_to_wait > 0:
+                time.sleep(time_to_wait)
+            ret = fn(*args, **kwargs)
+            last_called[0] = time.time()
+            return ret
 
         return wrapper
 
