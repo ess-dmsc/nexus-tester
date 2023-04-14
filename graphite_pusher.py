@@ -4,7 +4,7 @@ import threading
 import queue
 
 class GraphiteQueue:
-    def __init__(self, host, port, interval=1):
+    def __init__(self, host, port, interval=5):
         self.host = host
         self.port = port
         self.interval = interval
