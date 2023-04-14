@@ -23,7 +23,7 @@ def rate_limited(min_interval):
     return decorator
 
 
-@rate_limited(1)
+@rate_limited(5)
 def send_metric_to_graphite(host, port, metric, value, timestamp=None):
     """
     Send a metric to a Graphite server.

@@ -77,11 +77,13 @@ def check_nexus_file(file_path):
             check_entry_group(entry_group, errors, passed)
 
     if errors:
+        print("sending errors")
         send_metric_to_graphite(GRAPHITE_HOST, GRAPHITE_PORT, FAILED_METRIC_NAME, len(errors))
+        print("sending passed")
         send_metric_to_graphite(GRAPHITE_HOST, GRAPHITE_PORT, PASSED_METRIC_NAME, len(passed))
         print(f"The following {len(errors)} errors were found:")
-        for error in errors:
-            print(f" - {error}")
+        # for error in errors:
+        #     print(f" - {error}")
     else:
         send_metric_to_graphite(GRAPHITE_HOST, GRAPHITE_PORT, FAILED_METRIC_NAME, 0)
         send_metric_to_graphite(GRAPHITE_HOST, GRAPHITE_PORT, PASSED_METRIC_NAME, len(passed))
