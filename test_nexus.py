@@ -1,4 +1,9 @@
 import h5py
+from graphite_pusher import send_metric_to_graphite
+
+GRAPHITE_HOST = "10.100.211.201"
+GRAPHITE_PORT = 2003
+METRIC_NAME = "nexus_tester.failed_tests"
 
 def check_nexus_groups(file, errors):
     mandatory_groups = ['entry']
@@ -56,7 +61,8 @@ def check_nexus_file(file_path):
             check_entry_group(entry_group, errors)
 
     if errors:
-        print("The following errors were found:")
+        send_metric_to_graphite(GRAPHITE_HOST, GRAPHITE_PORT, METRIC_NAME, len(errors))
+        print(f"The following {len(errors)} errors were found:")
         for error in errors:
             print(f" - {error}")
     else:

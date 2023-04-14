@@ -36,8 +36,6 @@ def find_offset_by_timestamp(consumer, topic_partition, timestamp):
 def process_message(message):
     if message.value[4:8] == b'wrdn':
         result = deserialise_wrdn(message.value)
-        print("Got a wrdn message")
-        print(result.job_id)
         try:
             check_nexus_file(result.file_name)
         except Exception as e:
@@ -71,7 +69,6 @@ def main(broker, topic):
 
     # Process messages from the Kafka topic
     for message in consumer:
-        print('msg')
         process_message(message)
 
 if __name__ == "__main__":
