@@ -1,4 +1,5 @@
 import json
+import os
 import socket
 import time
 
@@ -14,7 +15,9 @@ def create_gelf_message(message, level, additional_fields):
         "full_message": message,
         "timestamp": time.time(),
         "level": level,  # Error level
-        "_facility": "NeXus File Tester",
+        "_facility": "ESS",
+        "_pid": os.getpid(),
+        "_process_name": os.path.basename(__file__),
     }
 
     for key, value in additional_fields.items():
