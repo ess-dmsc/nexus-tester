@@ -1,5 +1,6 @@
 import time
-from concurrent.futures import ThreadPoolExecutor
+from threading import Timer
+
 from confluent_kafka import Consumer, TopicPartition
 from streaming_data_types import deserialise_wrdn
 from test_nexus import check_nexus_file
@@ -38,13 +39,15 @@ def schedule_check_nexus_file(file_name, delay=10):
     time.sleep(delay)
     check_nexus_file(file_name)
 
+def schedule_check_nexus_file(file_name, delay=10):
+    timer = Timer(delay, check_nexus_file, args=(file_name,))
+    timer.start()
 
 def process_message(message):
     if message.value()[4:8] == b'wrdn':
         result = deserialise_wrdn(message.value())
         try:
-            with ThreadPoolExecutor(max_workers=POOL_SIZE) as executor:
-                executor.submit(schedule_check_nexus_file, result.file_name)
+            schedule_check_nexus_file(result.file_name)
         except Exception as e:
             print(f'failed to open {result.file_name}')
             print(e)
