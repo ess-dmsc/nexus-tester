@@ -16,7 +16,7 @@ def find_offset_by_timestamp(consumer, topic_partition, timestamp):
 
     while low < high:
         mid = (low + high) // 2
-        consumer.seek(topic_partition, mid)
+        consumer.seek(TopicPartition(topic_partition.topic, topic_partition.partition, mid))
 
         msg = consumer.poll(timeout=5)
 
@@ -69,7 +69,7 @@ def main(broker, topic):
     start_timestamp_ms = int((time.time() - START_TIMESTAMP_SEC) * 1000)
     for tp in topic_partitions:
         offset = find_offset_by_timestamp(consumer, tp, start_timestamp_ms)
-        consumer.seek(tp, offset)
+        consumer.seek(TopicPartition(tp.topic, tp.partition, offset))
 
     while True:
         msg = consumer.poll(1.0)
