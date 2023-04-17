@@ -16,7 +16,7 @@ def create_gelf_message(message, level, additional_fields):
         "level": level,  # Error level
         "_facility": "ESS",
         "_pid": os.getpid(),
-        "_process_name": os.path.basename(__file__),
+        "_process": 'nexus-tester',
     }
 
     for key, value in additional_fields.items():
