@@ -11,7 +11,6 @@ def create_gelf_message(message, level, additional_fields):
     gelf_message = {
         "version": "1.1",
         "host": socket.gethostname(),
-        "short_message": message,
         "full_message": message,
         "timestamp": time.time(),
         "level": level,  # Error level

@@ -18,7 +18,7 @@ def check_mandatory_fields(group, mandatory_fields, errors, passed):
         if field not in group:
             register_message(f"Error: {group.attrs.get('NX_class')} group '{group.name}' must have '{field}' field.", errors, 3)
         else:
-            register_message(f"Passed: {group.attrs.get('NX_class')} group '{group.name}' has '{field}' field.", passed, 2)
+            register_message(f"Passed: {group.attrs.get('NX_class')} group '{group.name}' has '{field}' field.", passed, 7)
 
 def check_nxlog_fields(nxlog_group, errors, passed):
     check_mandatory_fields(nxlog_group, ['value', 'time'], errors, passed)
@@ -28,12 +28,12 @@ def check_nxlog_fields(nxlog_group, errors, passed):
             if 'units' not in nxlog_group[field].attrs:
                 register_message(f"Error: '{field}' field in NXlog group '{nxlog_group.name}' must have 'units' attribute.", errors, 3)
             else:
-                register_message(f"Passed: '{field}' field in NXlog group '{nxlog_group.name}' has 'units' attribute.", passed, 2)
+                register_message(f"Passed: '{field}' field in NXlog group '{nxlog_group.name}' has 'units' attribute.", passed, 7)
 
             if len(nxlog_group[field]) < 1:
                 register_message(f"Error: NXlog group '{nxlog_group.name}' must have '{field}' field with a minimum length of 1.", errors, 3)
             else:
-                register_message(f"Passed: NXlog group '{nxlog_group.name}' has '{field}' field with a minimum length of 1.", passed, 2)
+                register_message(f"Passed: NXlog group '{nxlog_group.name}' has '{field}' field with a minimum length of 1.", passed, 7)
 
 def check_nxinstrument_fields(nxinstrument_group, errors, passed):
     check_mandatory_fields(nxinstrument_group, ['name'], errors, passed)
@@ -58,7 +58,7 @@ def check_entry_group(entry_group, errors, passed):
     if entry_group.attrs.get('NX_class') != 'NXentry':
         register_message("Error: Entry group NX_class should be 'NXentry'.", errors, 3)
     else:
-        register_message("Passed: Entry group NX_class is 'NXentry'.", passed, 2)
+        register_message("Passed: Entry group NX_class is 'NXentry'.", passed, 7)
 
     recursive_check(entry_group, errors, passed)
 
@@ -69,7 +69,7 @@ def check_nexus_file(file_path):
         if 'entry' not in file:
             register_message("Error: Mandatory group 'entry' not found.", errors, 3)
         else:
-            register_message("Passed: Mandatory group 'entry' found.", passed, 2)
+            register_message("Passed: Mandatory group 'entry' found.", passed, 7)
             entry_group = file.get('entry')
             if entry_group:
                 check_entry_group(entry_group, errors, passed)
